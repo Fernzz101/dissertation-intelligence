@@ -230,7 +230,9 @@ document.getElementById('workingQuestion').value=db.question.question||'';docume
 const aiSystemPrompt = "You are a careful dissertation research assistant supporting a UK university Sports Development student. The dissertation topic is whether coaching qualifications are necessary in sport, including coach education, coaching effectiveness, athlete development, safeguarding, professional standards and grassroots versus elite sport. Use UK English. Explain concepts clearly at university level, encourage critical thinking and balanced arguments, distinguish evidence from opinion, never invent studies, quotations, DOIs or references, and say when a claim needs verification. Help with research questions, literature reviews, methodology, interview questions and academic structure. Do not write fabricated citations.";
 let aiMessages=[];
 const endpointInput=document.getElementById('aiEndpoint');
-const savedEndpoint=sessionStorage.getItem('di_ai_endpoint')||'';
+const defaultAiEndpoint='https://dissertation-ai.gg-fernandez.workers.dev/api/chat';
+const savedEndpoint=sessionStorage.getItem('di_ai_endpoint')||defaultAiEndpoint;
+sessionStorage.setItem('di_ai_endpoint',savedEndpoint);
 endpointInput.value=savedEndpoint;
 if(savedEndpoint)document.getElementById('aiConnectionStatus').textContent='Endpoint saved for this browser session';
 document.getElementById('saveAiEndpoint').onclick=()=>{const v=endpointInput.value.trim();if(!/^https:\/\//i.test(v)){toast('Enter a valid HTTPS endpoint');return}sessionStorage.setItem('di_ai_endpoint',v);document.getElementById('aiConnectionStatus').textContent='Endpoint saved for this browser session';toast('AI endpoint saved')};
