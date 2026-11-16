@@ -186,7 +186,7 @@ function saveResearchResult(index){
   theme:document.getElementById('researchQuery')?.value.trim()||'Research literature',
   status:'To read',
   reference:reference||url,
-  comment:item.abstract?String(item.abstract).replace(/<[^>]*>/g,' ').replace(/\\s+/g,' ').trim():'Added from the Academic Research Engine. Check the original publication before using its findings.'
+  comment:item.abstract?String(item.abstract).replace(/<[^>]*>/g,' ').replace(/\s+/g,' ').trim():'Added from the Academic Research Engine. Check the original publication before using its findings.'
  };
  db.sources.push(source);
  save();
