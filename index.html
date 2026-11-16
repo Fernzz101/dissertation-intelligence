@@ -87,6 +87,19 @@ async function searchAcademic(){
  }).join('');
 }
 document.getElementById('researchQuery').addEventListener('keydown',e=>{if(e.key==='Enter')searchAcademic()});
+document.getElementById('runResearch').addEventListener('click',searchAcademic);
+document.getElementById('googleScholar').addEventListener('click',()=>{
+ const q=document.getElementById('researchQuery').value.trim();
+ if(!q){toast('Enter a research topic first');document.getElementById('researchQuery').focus();return}
+ const params=new URLSearchParams({hl:'en',as_sdt:'0%2C5',q});
+ const from=Number(document.getElementById('researchFrom').value)||null;
+ const to=Number(document.getElementById('researchTo').value)||null;
+ if(from)params.set('as_ylo',String(from));
+ if(to)params.set('as_yhi',String(to));
+ const url='https://scholar.google.com/scholar?'+params.toString();
+ const opened=window.open(url,'_blank','noopener,noreferrer');
+ if(!opened)toast('Your browser blocked the new tab. Allow pop-ups for this site and try again.');
+});
 
 // ===== Excel / CSV analysis =====
 let workbookRows=[],workbookHeaders=[],responseChart=null;
