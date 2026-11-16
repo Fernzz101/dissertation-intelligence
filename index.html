@@ -54,7 +54,7 @@ async function searchAcademic(){
  if(!q){toast('Enter a research topic first');return}
  const box=document.getElementById('researchResults'),heading=document.getElementById('researchHeading'),count=document.getElementById('researchCount');
  box.innerHTML='<div class="empty">Searching scholarly publication records…</div>';heading.textContent='Search results';count.textContent='';
- const params=new URLSearchParams({query.bibliographic:q,rows:'12',select:'title,author,published,created,type,container-title,DOI,URL,abstract,publisher'});
+ const params=new URLSearchParams({'query.bibliographic':q,rows:'12',select:'title,author,published,created,type,container-title,DOI,URL,abstract,publisher'});
  const from=document.getElementById('researchFrom').value,to=document.getElementById('researchTo').value;
  if(from||to){let range=(from||'1000')+'-'+(to||'2100');params.set('filter','from-pub-date:'+range.split('-')[0]+',until-pub-date:'+range.split('-')[1])}
  try{
