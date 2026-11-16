@@ -91,7 +91,7 @@ document.getElementById('runResearch').addEventListener('click',searchAcademic);
 document.getElementById('googleScholar').addEventListener('click',()=>{
  const q=document.getElementById('researchQuery').value.trim();
  if(!q){toast('Enter a research topic first');document.getElementById('researchQuery').focus();return}
- const params=new URLSearchParams({hl:'en',as_sdt:'0%2C5',q});
+ const params=new URLSearchParams({hl:'en',as_sdt:'0,5',q});
  const from=Number(document.getElementById('researchFrom').value)||null;
  const to=Number(document.getElementById('researchTo').value)||null;
  if(from)params.set('as_ylo',String(from));
