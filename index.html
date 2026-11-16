@@ -148,6 +148,51 @@ document.getElementById('downloadChart').addEventListener('click',()=>{if(!respo
 const KEY='dissertationIntel_v1';let db=load();function load(){try{return JSON.parse(localStorage.getItem(KEY))||{sources:[],evidence:[],notes:[],tasks:[],question:{}}}catch(e){return{sources:[],evidence:[],notes:[],tasks:[],question:{}}}}function save(){localStorage.setItem(KEY,JSON.stringify(db));render();}function id(){return Date.now().toString(36)+Math.random().toString(36).slice(2,7)}function esc(s){return String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]))}function toast(s){let t=document.getElementById('toast');t.textContent=s;t.style.display='block';setTimeout(()=>t.style.display='none',2400)}const titles={dashboard:'Research overview',literature:'Literature library',research:'Academic research engine',analysis:'Excel data analysis',matrix:'Evidence matrix',questions:'Research question studio',notes:'Research notes',plan:'Project planner',backup:'Data & settings'};function go(v){document.querySelectorAll('.view').forEach(x=>x.classList.toggle('active',x.id===v));document.querySelectorAll('[data-view]').forEach(x=>x.classList.toggle('active',x.dataset.view===v));document.getElementById('pageTitle').textContent=titles[v]||'Workspace';}document.querySelectorAll('[data-view]').forEach(b=>b.addEventListener('click',()=>go(b.dataset.view)));document.querySelectorAll('[data-jump]').forEach(b=>b.addEventListener('click',()=>go(b.dataset.jump)));
 function modal(title,body,submit){document.getElementById('modalTitle').textContent=title;document.getElementById('modalBody').innerHTML=body;document.getElementById('modalBack').style.display='grid';document.getElementById('modalSubmit')?.addEventListener('click',()=>{submit();document.getElementById('modalBack').style.display='none';});}function closeModal(){document.getElementById('modalBack').style.display='none'}document.getElementById('closeModal').onclick=closeModal;document.getElementById('modalBack').addEventListener('click',e=>{if(e.target.id==='modalBack')closeModal()});
 function sourceForm(s={}){modal(s.id?'Edit source':'Add literature source',`<div class="formgrid"><div class="field"><label>TITLE</label><input id="fTitle" value="${esc(s.title)}"></div><div class="field"><label>AUTHOR(S)</label><input id="fAuthor" value="${esc(s.author)}"></div><div class="field"><label>YEAR</label><input id="fYear" value="${esc(s.year)}" placeholder="2024"></div><div class="field"><label>TYPE</label><select id="fType"><option>Journal article</option><option>Book</option><option>Book chapter</option><option>Report</option><option>Webpage</option><option>Thesis</option><option>Other</option></select></div><div class="field"><label>THEME</label><input id="fTheme" value="${esc(s.theme)}" placeholder="Coach education, safety…"></div><div class="field"><label>STATUS</label><select id="fStatus"><option>To read</option><option>Reading</option><option>Reviewed</option></select></div></div><div class="field"><label>FULL REFERENCE / DOI / URL</label><textarea id="fRef" placeholder="Enter the full reference and link…">${esc(s.reference)}</textarea></div><div class="field"><label>YOUR INITIAL COMMENTS</label><textarea id="fComment">${esc(s.comment)}</textarea></div><button class="btn primary" id="modalSubmit">Save source</button>` ,()=>{let o={id:s.id||id(),title:val('fTitle'),author:val('fAuthor'),year:val('fYear'),type:val('fType'),theme:val('fTheme'),status:val('fStatus'),reference:val('fRef'),comment:val('fComment')};if(!o.title){toast('Please enter a source title');return}let i=db.sources.findIndex(x=>x.id===o.id);i<0?db.sources.push(o):db.sources[i]=o;save();toast('Source saved')});document.getElementById('fType').value=s.type||'Journal article';document.getElementById('fStatus').value=s.status||'To read'}
+function saveResearchResult(index){
+ const item=window.lastResearchResults?.[index];
+ if(!item){toast('This research result is no longer available. Search again and retry.');return}
+ const rawTitle=Array.isArray(item.title)?item.title[0]:item.title;
+ const title=String(rawTitle||'Untitled research record').trim();
+ const authors=Array.isArray(item.author)
+  ? item.author.map(a=>typeof a==='string'?a:[a.given,a.family].filter(Boolean).join(' ')).filter(Boolean).join(', ')
+  : String(item.author||item.authors||'');
+ const year=item.published?.['date-parts']?.[0]?.[0]
+  || item.created?.['date-parts']?.[0]?.[0]
+  || item.publication_year
+  || item.year
+  || '';
+ const journal=(Array.isArray(item['container-title'])?item['container-title'][0]:item['container-title'])
+  || item.journal
+  || item.publisher
+  || '';
+ const doi=item.DOI||item.doi||'';
+ const url=item.URL||item.url||(doi?'https://doi.org/'+doi:'');
+ const reference=[authors,year,title,journal,doi?'https://doi.org/'+doi:url].filter(Boolean).join('. ');
+ const duplicate=db.sources.find(s=>
+  (doi&&s.reference&&s.reference.toLowerCase().includes(doi.toLowerCase()))
+  || s.title.trim().toLowerCase()===title.toLowerCase()
+ );
+ if(duplicate){
+  go('literature');
+  toast('This paper is already in your Literature Library');
+  return;
+ }
+ const source={
+  id:id(),
+  title,
+  author:authors,
+  year:String(year),
+  type:'Journal article',
+  theme:document.getElementById('researchQuery')?.value.trim()||'Research literature',
+  status:'To read',
+  reference:reference||url,
+  comment:item.abstract?String(item.abstract).replace(/<[^>]*>/g,' ').replace(/\\s+/g,' ').trim():'Added from the Academic Research Engine. Check the original publication before using its findings.'
+ };
+ db.sources.push(source);
+ save();
+ go('literature');
+ toast('Paper added to your Literature Library');
+}
 function evidenceForm(e={}){modal('Add evidence entry',`<div class="field"><label>SOURCE</label><select id="eSource"><option value="">Select a saved source (or type source below)</option>${db.sources.map(s=>'<option>'+esc(s.title)+'</option>').join('')}</select></div><div class="field"><label>SOURCE NAME (IF NOT IN LIBRARY)</label><input id="eName" value="${esc(e.source)}"></div><div class="field"><label>METHOD / SAMPLE</label><textarea id="eMethod">${esc(e.method)}</textarea></div><div class="field"><label>KEY FINDING (WHAT DID THE AUTHORS REPORT?)</label><textarea id="eFinding">${esc(e.finding)}"></textarea></div><div class="field"><label>RELEVANCE / LIMITATIONS / YOUR CRITICAL COMMENT</label><textarea id="eLimit">${esc(e.limit)}</textarea></div><button class="btn primary" id="modalSubmit">Save evidence</button>`,()=>{let o={id:e.id||id(),source:val('eName')||val('eSource'),method:val('eMethod'),finding:val('eFinding'),limit:val('eLimit')};if(!o.source||!o.finding){toast('Add a source and key finding');return}let i=db.evidence.findIndex(x=>x.id===o.id);i<0?db.evidence.push(o):db.evidence[i]=o;save();toast('Evidence saved')})}
 function taskForm(t={}){modal('Add project task',`<div class="field"><label>TASK</label><input id="tTitle" value="${esc(t.title)}" placeholder="e.g. Search for coach education research"></div><div class="formgrid"><div class="field"><label>STAGE</label><select id="tStage"><option>Planning</option><option>Literature review</option><option>Methodology</option><option>Data collection</option><option>Analysis</option><option>Writing</option><option>Final checks</option></select></div><div class="field"><label>DUE DATE</label><input id="tDue" type="date" value="${esc(t.due)}"></div></div><div class="field"><label>STATUS</label><select id="tStatus"><option>To do</option><option>In progress</option><option>Completed</option></select></div><button class="btn primary" id="modalSubmit">Save task</button>`,()=>{let o={id:t.id||id(),title:val('tTitle'),stage:val('tStage'),due:val('tDue'),status:val('tStatus')};if(!o.title){toast('Enter a task');return}let i=db.tasks.findIndex(x=>x.id===o.id);i<0?db.tasks.push(o):db.tasks[i]=o;save();toast('Task saved')});document.getElementById('tStage').value=t.stage||'Planning';document.getElementById('tStatus').value=t.status||'To do'}
 function val(id){return document.getElementById(id).value.trim()}document.getElementById('addSource').onclick=()=>sourceForm();document.getElementById('addEvidence').onclick=()=>evidenceForm();document.getElementById('addTask').onclick=()=>taskForm();
